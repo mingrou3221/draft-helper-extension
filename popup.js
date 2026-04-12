@@ -234,7 +234,6 @@ function renderTextList() {
         <div class="text-item-content">${escHtml(t.content)}</div>
       </div>
       <div class="text-item-actions">
-        <button class="text-action-btn btn-copy" title="複製">⎘</button>
         <button class="text-action-btn btn-edit-text" title="編輯">✏</button>
         <button class="text-action-btn btn-del-text" title="刪除">🗑</button>
       </div>
@@ -243,12 +242,6 @@ function renderTextList() {
 
     // Click item body → copy
     item.querySelector('.text-item-body').addEventListener('click', () => copyText(t, item));
-
-    // Copy button
-    item.querySelector('.btn-copy').addEventListener('click', (e) => {
-      e.stopPropagation();
-      copyText(t, item);
-    });
 
     // Edit button
     item.querySelector('.btn-edit-text').addEventListener('click', (e) => {

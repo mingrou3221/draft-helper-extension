@@ -117,7 +117,7 @@ body {
   height: 22px;
   border-radius: 5px;
   border: none;
-  background: #4361ee;
+  background: #2c7cb0;
   color: white;
   font-size: 15px;
   line-height: 1;
@@ -129,7 +129,7 @@ body {
 }
 
 .btn-small:hover {
-  background: #3a0ca3;
+  background: #1f5c85;
 }
 
 /* ── Tree ── */
@@ -394,15 +394,6 @@ body {
   transition: background 0.12s;
 }
 
-.btn-copy {
-  background: #e8f4fd;
-  color: #4361ee;
-}
-
-.btn-copy:hover {
-  background: #4361ee;
-  color: white;
-}
 
 .btn-edit-text {
   background: #f0f0f0;
@@ -597,7 +588,7 @@ body {
   padding: 7px 16px;
   border: none;
   border-radius: 7px;
-  background: #4361ee;
+  background: #2c7cb0;
   color: white;
   cursor: pointer;
   font-size: 13px;
@@ -606,7 +597,7 @@ body {
 }
 
 .btn-primary:hover {
-  background: #3a0ca3;
+  background: #1f5c85;
 }
 
 /* ── Danger Button ── */
