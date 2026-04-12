@@ -3,6 +3,7 @@ let tree = [];           // root array of folder/text nodes
 let selectedFolderId = '__root__';  // currently selected folder in tree
 let editingNodeId = null;           // node being edited
 let searchQuery = '';
+let showHidden = false;             // whether to show hidden folders
 
 // ── Utility ────────────────────────────────────────────
 function genId() {
@@ -21,12 +22,16 @@ function findNode(nodes, id) {
   return null;
 }
 
-// Collect all text nodes under a folder (recursive)
-function collectTexts(nodes) {
+// Collect all text nodes under a folder (recursive); respects hidden state
+function collectTexts(nodes, includeHidden = false) {
   const texts = [];
   for (const n of nodes) {
     if (n.type === 'text') texts.push(n);
-    if (n.type === 'folder' && n.children) texts.push(...collectTexts(n.children));
+    if (n.type === 'folder' && n.children) {
+      if (!n.hidden || includeHidden) {
+        texts.push(...collectTexts(n.children, includeHidden));
+      }
+    }
   }
   return texts;
 }
@@ -98,22 +103,35 @@ function renderTree() {
 }
 
 function renderFolderNodes(nodes, container, depth) {
+  // Only count folder siblings for up/down boundary check
+  const folderSiblings = nodes.filter(n => n.type === 'folder');
+
   for (const node of nodes) {
     if (node.type !== 'folder') continue;
 
+    // Skip hidden folders unless showHidden is on
+    if (node.hidden && !showHidden) continue;
+
     const wrapper = document.createElement('div');
-    wrapper.className = 'tree-folder-row';
+    wrapper.className = 'tree-folder-row' + (node.hidden ? ' folder-hidden-row' : '');
 
     const folderEl = document.createElement('div');
     folderEl.className = 'tree-folder' + (node.expanded ? ' expanded' : '');
     folderEl.dataset.id = node.id;
     folderEl.style.paddingLeft = (8 + depth * 14) + 'px';
 
+    const sibIdx = folderSiblings.indexOf(node);
+    const isFirst = sibIdx === 0;
+    const isLast = sibIdx === folderSiblings.length - 1;
+
     folderEl.innerHTML = `
       <span class="folder-arrow">▶</span>
       <span class="folder-icon">📁</span>
       <span class="folder-name" title="${escHtml(node.name)}">${escHtml(node.name)}</span>
       <span class="folder-actions">
+        <button class="folder-btn" data-action="up" title="上移" ${isFirst ? 'disabled style="opacity:0.3"' : ''}>↑</button>
+        <button class="folder-btn" data-action="down" title="下移" ${isLast ? 'disabled style="opacity:0.3"' : ''}>↓</button>
+        <button class="folder-btn" data-action="hide" title="${node.hidden ? '取消隱藏' : '隱藏'}">${node.hidden ? '🙈' : '👁'}</button>
         <button class="folder-btn" data-action="edit" title="編輯">✏</button>
         <button class="folder-btn del" data-action="delete" title="刪除">🗑</button>
       </span>
@@ -127,6 +145,21 @@ function renderFolderNodes(nodes, container, depth) {
       saveTree();
       renderTree();
       renderTextList();
+    });
+
+    folderEl.querySelector('[data-action="up"]').addEventListener('click', (e) => {
+      e.stopPropagation();
+      moveFolderUp(node.id, nodes);
+    });
+
+    folderEl.querySelector('[data-action="down"]').addEventListener('click', (e) => {
+      e.stopPropagation();
+      moveFolderDown(node.id, nodes);
+    });
+
+    folderEl.querySelector('[data-action="hide"]').addEventListener('click', (e) => {
+      e.stopPropagation();
+      toggleFolderHidden(node.id);
     });
 
     folderEl.querySelector('[data-action="edit"]').addEventListener('click', (e) => {
@@ -161,7 +194,7 @@ function renderTextList() {
   let texts = [];
   if (selectedFolderId === '__root__') {
     title.textContent = '所有文字';
-    texts = collectTexts(tree);
+    texts = collectTexts(tree, showHidden);
   } else {
     const found = findNode(tree, selectedFolderId);
     if (found) {
@@ -415,6 +448,41 @@ function insertTextNode(node, folderId) {
   }
 }
 
+// ── Folder Order & Visibility ──────────────────────────
+function moveFolderUp(id, siblingNodes) {
+  const folders = siblingNodes.filter(n => n.type === 'folder');
+  const idx = folders.findIndex(n => n.id === id);
+  if (idx <= 0) return;
+  // Swap in the actual parent array (siblingNodes)
+  const aIdx = siblingNodes.indexOf(folders[idx]);
+  const bIdx = siblingNodes.indexOf(folders[idx - 1]);
+  [siblingNodes[aIdx], siblingNodes[bIdx]] = [siblingNodes[bIdx], siblingNodes[aIdx]];
+  saveTree();
+  renderTree();
+}
+
+function moveFolderDown(id, siblingNodes) {
+  const folders = siblingNodes.filter(n => n.type === 'folder');
+  const idx = folders.findIndex(n => n.id === id);
+  if (idx === -1 || idx >= folders.length - 1) return;
+  const aIdx = siblingNodes.indexOf(folders[idx]);
+  const bIdx = siblingNodes.indexOf(folders[idx + 1]);
+  [siblingNodes[aIdx], siblingNodes[bIdx]] = [siblingNodes[bIdx], siblingNodes[aIdx]];
+  saveTree();
+  renderTree();
+}
+
+function toggleFolderHidden(id) {
+  const found = findNode(tree, id);
+  if (!found) return;
+  found.node.hidden = !found.node.hidden;
+  // If hiding the currently selected folder, go back to root
+  if (found.node.hidden && selectedFolderId === id) selectedFolderId = '__root__';
+  saveTree();
+  renderTree();
+  renderTextList();
+}
+
 // ── Delete ─────────────────────────────────────────────
 let pendingDeleteId = null;
 
@@ -496,6 +564,14 @@ document.addEventListener('DOMContentLoaded', () => {
     selectedFolderId = '__root__';
     document.querySelectorAll('.tree-folder, .tree-item-root').forEach(el => el.classList.remove('active'));
     document.getElementById('tree-item-root').classList.add('active');
+    renderTextList();
+  });
+
+  // Toggle hidden folders visibility
+  document.getElementById('btn-toggle-hidden').addEventListener('click', () => {
+    showHidden = !showHidden;
+    document.getElementById('btn-toggle-hidden').classList.toggle('active', showHidden);
+    renderTree();
     renderTextList();
   });
 

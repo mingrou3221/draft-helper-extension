@@ -239,6 +239,32 @@ body {
   color: #e63946;
 }
 
+.btn-ghost {
+  background: transparent;
+  border: 1px solid #d0d3e8;
+  color: #888;
+  font-size: 12px;
+}
+
+.btn-ghost:hover {
+  background: #eef0fb;
+}
+
+.btn-ghost.active {
+  background: #eef0fb;
+  border-color: #4361ee;
+  color: #4361ee;
+}
+
+.folder-hidden-row > .tree-folder {
+  opacity: 0.38;
+}
+
+.folder-hidden-row > .tree-folder .folder-icon::after {
+  content: ' 🚫';
+  font-size: 10px;
+}
+
 .tree-children {
   display: none;
 }
