@@ -83,21 +83,7 @@ function loadTree(cb) {
 }
 
 function defaultData() {
-  return [
-    {
-      id: genId(), name: '問候語', type: 'folder', expanded: true,
-      children: [
-        { id: genId(), name: '正式問候', type: 'text', content: '您好，感謝您的聯繫，請問有什麼需要協助的地方？', tags: [] },
-        { id: genId(), name: '輕鬆問候', type: 'text', content: '嗨！有什麼我能幫上忙的嗎？', tags: [] },
-      ]
-    },
-    {
-      id: genId(), name: '結語', type: 'folder', expanded: false,
-      children: [
-        { id: genId(), name: '感謝結語', type: 'text', content: '感謝您的耐心等候，祝您有美好的一天！', tags: [] },
-      ]
-    }
-  ];
+  return [];
 }
 
 // ── Render: Tree ───────────────────────────────────────
