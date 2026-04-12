@@ -106,12 +106,28 @@ function renderTree() {
   container.innerHTML = '';
   renderFolderNodes(tree, container, 0);
   renderTagList();
+  updateFolderToolbar();
 
   document.querySelectorAll('.tree-folder, .tree-item-root, .tree-tag-item').forEach(el => {
     el.classList.remove('active');
   });
   const activeEl = document.querySelector(`[data-id="${CSS.escape(selectedFolderId)}"]`);
   if (activeEl) activeEl.classList.add('active');
+}
+
+function updateFolderToolbar() {
+  const isFolder = !selectedFolderId.startsWith('__') && !!findNode(tree, selectedFolderId);
+  const ids = ['tb-up', 'tb-down', 'tb-hide', 'tb-edit', 'tb-delete'];
+  ids.forEach(id => {
+    const btn = document.getElementById(id);
+    if (btn) btn.disabled = !isFolder;
+  });
+
+  if (isFolder) {
+    const found = findNode(tree, selectedFolderId);
+    const hideBtn = document.getElementById('tb-hide');
+    if (found && hideBtn) hideBtn.textContent = found.node.hidden ? '🙈' : '👀';
+  }
 }
 
 function renderFolderNodes(nodes, container, depth) {
@@ -129,52 +145,19 @@ function renderFolderNodes(nodes, container, depth) {
     folderEl.dataset.id = node.id;
     folderEl.style.paddingLeft = (8 + depth * 14) + 'px';
 
-    const sibIdx = folderSiblings.indexOf(node);
-    const isFirst = sibIdx === 0;
-    const isLast = sibIdx === folderSiblings.length - 1;
-
     folderEl.innerHTML = `
       <span class="folder-arrow">▶</span>
       <span class="folder-icon">📁</span>
       <span class="folder-name" title="${escHtml(node.name)}">${escHtml(node.name)}</span>
-      <span class="folder-actions">
-        <button class="folder-btn" data-action="up" title="上移" ${isFirst ? 'disabled style="opacity:0.3"' : ''}>↑</button>
-        <button class="folder-btn" data-action="down" title="下移" ${isLast ? 'disabled style="opacity:0.3"' : ''}>↓</button>
-        <button class="folder-btn" data-action="hide" title="${node.hidden ? '取消隱藏' : '隱藏'}">${node.hidden ? '🙈' : '👀'}</button>
-        <button class="folder-btn" data-action="edit" title="編輯">✏</button>
-        <button class="folder-btn del" data-action="delete" title="刪除">🗑</button>
-      </span>
     `;
 
     folderEl.addEventListener('click', (e) => {
-      if (e.target.closest('[data-action]')) return;
       e.stopPropagation();
       node.expanded = !node.expanded;
       selectedFolderId = node.id;
       saveTree();
       renderTree();
       renderTextList();
-    });
-
-    folderEl.querySelector('[data-action="up"]').addEventListener('click', (e) => {
-      e.stopPropagation();
-      moveFolderUp(node.id, nodes);
-    });
-    folderEl.querySelector('[data-action="down"]').addEventListener('click', (e) => {
-      e.stopPropagation();
-      moveFolderDown(node.id, nodes);
-    });
-    folderEl.querySelector('[data-action="hide"]').addEventListener('click', (e) => {
-      e.stopPropagation();
-      toggleFolderHidden(node.id);
-    });
-    folderEl.querySelector('[data-action="edit"]').addEventListener('click', (e) => {
-      e.stopPropagation();
-      openEditFolderModal(node.id);
-    });
-    folderEl.querySelector('[data-action="delete"]').addEventListener('click', (e) => {
-      e.stopPropagation();
-      deleteNode(node.id);
     });
 
     wrapper.appendChild(folderEl);
@@ -529,23 +512,25 @@ function renderTagChips() {
 
 // ── Folder Order & Visibility ──────────────────────────
 function moveFolderUp(id, siblingNodes) {
-  const folders = siblingNodes.filter(n => n.type === 'folder');
+  const arr = siblingNodes || (findNode(tree, id) || {}).parent || tree;
+  const folders = arr.filter(n => n.type === 'folder');
   const idx = folders.findIndex(n => n.id === id);
   if (idx <= 0) return;
-  const aIdx = siblingNodes.indexOf(folders[idx]);
-  const bIdx = siblingNodes.indexOf(folders[idx - 1]);
-  [siblingNodes[aIdx], siblingNodes[bIdx]] = [siblingNodes[bIdx], siblingNodes[aIdx]];
+  const aIdx = arr.indexOf(folders[idx]);
+  const bIdx = arr.indexOf(folders[idx - 1]);
+  [arr[aIdx], arr[bIdx]] = [arr[bIdx], arr[aIdx]];
   saveTree();
   renderTree();
 }
 
 function moveFolderDown(id, siblingNodes) {
-  const folders = siblingNodes.filter(n => n.type === 'folder');
+  const arr = siblingNodes || (findNode(tree, id) || {}).parent || tree;
+  const folders = arr.filter(n => n.type === 'folder');
   const idx = folders.findIndex(n => n.id === id);
   if (idx === -1 || idx >= folders.length - 1) return;
-  const aIdx = siblingNodes.indexOf(folders[idx]);
-  const bIdx = siblingNodes.indexOf(folders[idx + 1]);
-  [siblingNodes[aIdx], siblingNodes[bIdx]] = [siblingNodes[bIdx], siblingNodes[aIdx]];
+  const aIdx = arr.indexOf(folders[idx]);
+  const bIdx = arr.indexOf(folders[idx + 1]);
+  [arr[aIdx], arr[bIdx]] = [arr[bIdx], arr[aIdx]];
   saveTree();
   renderTree();
 }
@@ -644,11 +629,27 @@ document.addEventListener('DOMContentLoaded', () => {
 
   initTagInput();
 
-  document.getElementById('tree-item-root').addEventListener('click', () => {
-    selectedFolderId = '__root__';
-    document.querySelectorAll('.tree-folder, .tree-item-root, .tree-tag-item').forEach(el => el.classList.remove('active'));
-    document.getElementById('tree-item-root').classList.add('active');
-    renderTextList();
+  // Folder toolbar buttons
+  document.getElementById('tb-up').addEventListener('click', () => {
+    if (!selectedFolderId.startsWith('__')) {
+      const found = findNode(tree, selectedFolderId);
+      if (found) moveFolderUp(selectedFolderId, found.parent);
+    }
+  });
+  document.getElementById('tb-down').addEventListener('click', () => {
+    if (!selectedFolderId.startsWith('__')) {
+      const found = findNode(tree, selectedFolderId);
+      if (found) moveFolderDown(selectedFolderId, found.parent);
+    }
+  });
+  document.getElementById('tb-hide').addEventListener('click', () => {
+    if (!selectedFolderId.startsWith('__')) toggleFolderHidden(selectedFolderId);
+  });
+  document.getElementById('tb-edit').addEventListener('click', () => {
+    if (!selectedFolderId.startsWith('__')) openEditFolderModal(selectedFolderId);
+  });
+  document.getElementById('tb-delete').addEventListener('click', () => {
+    if (!selectedFolderId.startsWith('__')) deleteNode(selectedFolderId);
   });
 
   document.getElementById('tree-item-recent').addEventListener('click', () => {

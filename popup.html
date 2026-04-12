@@ -22,18 +22,20 @@
   <div class="main-layout">
     <!-- Left: Tree Panel -->
     <div class="tree-panel">
-      <div class="panel-header">
-        <span>目錄</span>
+      <div class="panel-header no-border">
+        <div class="folder-toolbar">
+          <button class="tb-btn" id="tb-up" title="上移" disabled>↑</button>
+          <button class="tb-btn" id="tb-down" title="下移" disabled>↓</button>
+          <button class="tb-btn" id="tb-hide" title="隱藏" disabled>👀</button>
+          <button class="tb-btn" id="tb-edit" title="編輯" disabled>✏</button>
+          <button class="tb-btn tb-del" id="tb-delete" title="刪除" disabled>🗑</button>
+        </div>
         <div style="display:flex;gap:4px">
           <button id="btn-toggle-hidden" class="btn-small btn-ghost" title="顯示隱藏資料夾">👀</button>
           <button id="btn-add-folder" class="btn-small" title="新增資料夾">＋</button>
         </div>
       </div>
       <div class="tree-root" id="tree-root">
-        <!-- 根層：顯示所有 -->
-        <div class="tree-item-root" id="tree-item-root" data-id="__root__">
-          <span class="tree-label">所有文字</span>
-        </div>
         <div class="tree-item-root" id="tree-item-recent" data-id="__recent__">
           <span class="tree-label">最近複製</span>
         </div>
