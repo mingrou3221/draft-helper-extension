@@ -18,8 +18,19 @@
     </div>
   </header>
 
+  <!-- Tab Bar -->
+  <div class="tab-bar">
+    <button class="tab active" id="tab-library">文字庫</button>
+    <button class="tab" id="tab-recent">最近複製</button>
+  </div>
+
+  <!-- Recent Panel -->
+  <div id="recent-panel" class="recent-panel hidden">
+    <div id="recent-list" class="text-list"></div>
+  </div>
+
   <!-- Main Layout -->
-  <div class="main-layout">
+  <div class="main-layout" id="library-panel">
     <!-- Left: Tree Panel -->
     <div class="tree-panel">
       <div class="panel-header no-border">
@@ -36,9 +47,6 @@
         </div>
       </div>
       <div class="tree-root" id="tree-root">
-        <div class="tree-item-root" id="tree-item-recent" data-id="__recent__">
-          <span class="tree-label">最近複製</span>
-        </div>
         <div id="tree-container">
           <!-- dynamically rendered -->
         </div>

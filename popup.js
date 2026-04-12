@@ -5,6 +5,7 @@ let editingNodeId = null;
 let searchQuery = '';
 let showHidden = false;
 let recentCopied = [];    // array of text node IDs (max 10)
+let activeTab = 'library'; // 'library' | 'recent'
 let currentTags = [];     // tags being edited in modal
 let pendingDeleteId = null;
 
@@ -285,7 +286,49 @@ function copyText(node, itemEl) {
 function recordRecent(nodeId) {
   recentCopied = [nodeId, ...recentCopied.filter(id => id !== nodeId)].slice(0, 10);
   saveRecent();
-  if (selectedFolderId === '__recent__') renderTextList();
+  if (activeTab === 'recent') renderRecentList();
+}
+
+function renderRecentList() {
+  const list = document.getElementById('recent-list');
+  list.innerHTML = '';
+  const texts = recentCopied.map(id => {
+    const found = findNode(tree, id);
+    return found ? found.node : null;
+  }).filter(Boolean);
+
+  if (texts.length === 0) {
+    list.innerHTML = '<div class="empty-state"><div class="empty-icon">📭</div><div>尚無複製紀錄</div></div>';
+    return;
+  }
+
+  for (const t of texts) {
+    const item = document.createElement('div');
+    item.className = 'text-item' + (!t.name ? ' text-item-no-title' : '');
+    const hasTitle = t.name && t.name.trim();
+    const tagsHtml = t.tags && t.tags.length
+      ? `<div class="text-item-tags">${t.tags.map(tag => `<span class="item-tag-chip">${escHtml(tag)}</span>`).join('')}</div>`
+      : '';
+    item.innerHTML = `
+      <div class="text-item-body">
+        ${hasTitle ? `<div class="text-item-name">${escHtml(t.name)}</div>` : ''}
+        <div class="text-item-content">${escHtml(t.content)}</div>
+        ${tagsHtml}
+      </div>
+      <div class="copy-indicator">已複製！</div>
+    `;
+    item.querySelector('.text-item-body').addEventListener('click', () => copyText(t, item));
+    list.appendChild(item);
+  }
+}
+
+function switchTab(tab) {
+  activeTab = tab;
+  document.getElementById('tab-library').classList.toggle('active', tab === 'library');
+  document.getElementById('tab-recent').classList.toggle('active', tab === 'recent');
+  document.getElementById('library-panel').classList.toggle('hidden', tab !== 'library');
+  document.getElementById('recent-panel').classList.toggle('hidden', tab !== 'recent');
+  if (tab === 'recent') renderRecentList();
 }
 
 function showToast(msg) {
@@ -637,12 +680,8 @@ document.addEventListener('DOMContentLoaded', () => {
     if (!selectedFolderId.startsWith('__')) deleteNode(selectedFolderId);
   });
 
-  document.getElementById('tree-item-recent').addEventListener('click', () => {
-    selectedFolderId = '__recent__';
-    document.querySelectorAll('.tree-folder, .tree-item-root, .tree-tag-item').forEach(el => el.classList.remove('active'));
-    document.getElementById('tree-item-recent').classList.add('active');
-    renderTextList();
-  });
+  document.getElementById('tab-library').addEventListener('click', () => switchTab('library'));
+  document.getElementById('tab-recent').addEventListener('click', () => switchTab('recent'));
 
   document.getElementById('btn-toggle-hidden').addEventListener('click', () => {
     showHidden = !showHidden;
