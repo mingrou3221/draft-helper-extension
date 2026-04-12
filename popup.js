@@ -146,7 +146,6 @@ function renderFolderNodes(nodes, container, depth) {
     folderEl.style.paddingLeft = (8 + depth * 14) + 'px';
 
     folderEl.innerHTML = `
-      <span class="folder-arrow">▶</span>
       <span class="folder-icon">📁</span>
       <span class="folder-name" title="${escHtml(node.name)}">${escHtml(node.name)}</span>
     `;
