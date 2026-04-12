@@ -16,6 +16,7 @@
     <div class="header-actions">
       <button id="btn-recent" class="btn-icon btn-ie-label" title="最近複製">最近複製</button>
       <button id="btn-import-export" class="btn-icon btn-ie-label" title="匯出/匯入">匯出/匯入</button>
+      <button id="btn-release-log" class="btn-icon btn-version" title="版本記錄">v1.0</button>
     </div>
   </header>
 
@@ -111,6 +112,19 @@
   </div>
 
   <!-- Modal: Import/Export -->
+  <!-- Modal: Release Log -->
+  <div id="modal-release-log" class="modal-overlay hidden">
+    <div class="modal modal-release">
+      <div class="modal-header">
+        <span>版本記錄</span>
+        <button class="modal-close" data-modal="modal-release-log">✕</button>
+      </div>
+      <div class="modal-body release-log-body" id="release-log-content">
+        <!-- dynamically rendered -->
+      </div>
+    </div>
+  </div>
+
   <div id="modal-ie" class="modal-overlay hidden">
     <div class="modal">
       <div class="modal-header">

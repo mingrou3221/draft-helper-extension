@@ -580,6 +580,51 @@ function escHtml(str) {
   return str.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
 }
 
+// ── Release Log ────────────────────────────────────────
+const RELEASE_LOG = [
+  {
+    version: '1.0',
+    date: '2026-04-12',
+    badge: '初始版本',
+    items: [
+      '樹狀資料夾結構，支援多層巢狀',
+      '一鍵複製常用文字到剪貼簿',
+      '新增/編輯/刪除資料夾與文字',
+      '資料夾排序（↑↓）與隱藏功能',
+      '標籤系統，跨資料夾檢索',
+      '最近複製紀錄',
+      '搜尋功能（支援標籤搜尋）',
+      '匯入/匯出（JSON 格式）',
+    ]
+  }
+];
+
+function openReleaseLog() {
+  const content = document.getElementById('release-log-content');
+  content.innerHTML = '';
+  RELEASE_LOG.forEach((entry, idx) => {
+    const div = document.createElement('div');
+    div.className = 'release-entry';
+    div.innerHTML = `
+      <div class="release-header">
+        <span class="release-version">v${escHtml(entry.version)}</span>
+        <span class="release-date">${escHtml(entry.date)}</span>
+        ${entry.badge ? `<span class="release-badge">${escHtml(entry.badge)}</span>` : ''}
+      </div>
+      <ul class="release-items">
+        ${entry.items.map(item => `<li>${escHtml(item)}</li>`).join('')}
+      </ul>
+    `;
+    content.appendChild(div);
+    if (idx < RELEASE_LOG.length - 1) {
+      const hr = document.createElement('hr');
+      hr.className = 'release-divider';
+      content.appendChild(hr);
+    }
+  });
+  document.getElementById('modal-release-log').classList.remove('hidden');
+}
+
 // ── Import / Export ────────────────────────────────────
 function doExport() {
   const json = JSON.stringify(tree, null, 2);
@@ -681,6 +726,8 @@ document.addEventListener('DOMContentLoaded', () => {
   });
 
   document.getElementById('btn-confirm-delete').addEventListener('click', confirmDelete);
+
+  document.getElementById('btn-release-log').addEventListener('click', openReleaseLog);
 
   document.getElementById('btn-import-export').addEventListener('click', () => {
     document.getElementById('import-textarea').value = '';
