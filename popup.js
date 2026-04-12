@@ -257,7 +257,7 @@ function renderTextList() {
         ${tagsHtml}
       </div>
       <div class="text-item-actions">
-        <button class="text-action-btn btn-edit-text" title="編輯">✏</button>
+        <button class="text-action-btn btn-edit-text" title="編輯">✏️</button>
         <button class="text-action-btn btn-del-text" title="刪除">🗑</button>
       </div>
       <div class="copy-indicator">已複製！</div>
