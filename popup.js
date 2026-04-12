@@ -131,7 +131,7 @@ function renderFolderNodes(nodes, container, depth) {
       <span class="folder-actions">
         <button class="folder-btn" data-action="up" title="上移" ${isFirst ? 'disabled style="opacity:0.3"' : ''}>↑</button>
         <button class="folder-btn" data-action="down" title="下移" ${isLast ? 'disabled style="opacity:0.3"' : ''}>↓</button>
-        <button class="folder-btn" data-action="hide" title="${node.hidden ? '取消隱藏' : '隱藏'}">${node.hidden ? '🙈' : '👁'}</button>
+        <button class="folder-btn" data-action="hide" title="${node.hidden ? '取消隱藏' : '隱藏'}">${node.hidden ? '🙈' : '👀'}</button>
         <button class="folder-btn" data-action="edit" title="編輯">✏</button>
         <button class="folder-btn del" data-action="delete" title="刪除">🗑</button>
       </span>
