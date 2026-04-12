@@ -78,7 +78,7 @@ body {
 
 /* ── Tree Panel ── */
 .tree-panel {
-  width: 170px;
+  width: 210px;
   flex-shrink: 0;
   background: #ffffff;
   border-right: 1px solid #e8eaf0;
