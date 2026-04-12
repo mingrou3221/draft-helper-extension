@@ -34,9 +34,14 @@
         <div class="tree-item-root" id="tree-item-root" data-id="__root__">
           <span class="tree-label">所有文字</span>
         </div>
+        <div class="tree-item-root" id="tree-item-recent" data-id="__recent__">
+          <span class="tree-label">最近複製</span>
+        </div>
         <div id="tree-container">
           <!-- dynamically rendered -->
         </div>
+        <div class="tree-section">標籤</div>
+        <div id="tag-list-container"></div>
       </div>
     </div>
 
@@ -88,6 +93,10 @@
         <input type="text" id="text-name-input" placeholder="輸入標題..." maxlength="80" />
         <label style="margin-top:12px">文字內容</label>
         <textarea id="text-content-input" placeholder="輸入要儲存的文字..." rows="5"></textarea>
+        <label style="margin-top:12px">標籤</label>
+        <div class="tag-input-box" id="tag-input-box">
+          <input type="text" id="tag-input-field" placeholder="輸入後按 Enter 新增..." />
+        </div>
         <label style="margin-top:12px">存放目錄</label>
         <select id="text-folder-select">
           <!-- dynamically rendered -->
