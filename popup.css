@@ -169,6 +169,16 @@ body {
   background: #1f5c85;
 }
 
+/* ── Tree Section Label ── */
+.tree-section-label {
+  padding: 8px 12px 4px;
+  font-size: 11px;
+  font-weight: 700;
+  color: #aaa;
+  text-transform: uppercase;
+  letter-spacing: 0.6px;
+}
+
 /* ── Tree ── */
 .tree-root {
   flex: 1;

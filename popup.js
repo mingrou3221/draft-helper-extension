@@ -637,10 +637,9 @@ document.addEventListener('DOMContentLoaded', () => {
     if (!selectedFolderId.startsWith('__')) deleteNode(selectedFolderId);
   });
 
-  document.getElementById('tree-item-recent').addEventListener('click', () => {
+  document.getElementById('btn-recent').addEventListener('click', () => {
     selectedFolderId = '__recent__';
-    document.querySelectorAll('.tree-folder, .tree-item-root, .tree-tag-item').forEach(el => el.classList.remove('active'));
-    document.getElementById('tree-item-recent').classList.add('active');
+    document.querySelectorAll('.tree-folder, .tree-tag-item').forEach(el => el.classList.remove('active'));
     renderTextList();
   });
 
