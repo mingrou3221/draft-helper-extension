@@ -1,0 +1,140 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>文字庫</title>
+  <link rel="stylesheet" href="popup.css">
+</head>
+<body>
+  <!-- Header -->
+  <header class="header">
+    <div class="header-title">
+      <span class="header-icon">📋</span>
+      <span>文字庫</span>
+    </div>
+    <div class="header-actions">
+      <button id="btn-import-export" class="btn-icon" title="匯入/匯出">⚙</button>
+    </div>
+  </header>
+
+  <!-- Main Layout -->
+  <div class="main-layout">
+    <!-- Left: Tree Panel -->
+    <div class="tree-panel">
+      <div class="panel-header">
+        <span>目錄</span>
+        <button id="btn-add-folder" class="btn-small" title="新增資料夾">＋</button>
+      </div>
+      <div class="tree-root" id="tree-root">
+        <!-- 根層：顯示所有 -->
+        <div class="tree-item-root" id="tree-item-root" data-id="__root__">
+          <span class="tree-label">所有文字</span>
+        </div>
+        <div id="tree-container">
+          <!-- dynamically rendered -->
+        </div>
+      </div>
+    </div>
+
+    <!-- Right: Content Panel -->
+    <div class="content-panel">
+      <div class="panel-header">
+        <span id="content-title">所有文字</span>
+        <button id="btn-add-text" class="btn-small" title="新增文字">＋</button>
+      </div>
+      <div class="search-bar">
+        <input type="text" id="search-input" placeholder="搜尋文字..." />
+      </div>
+      <div id="text-list" class="text-list">
+        <!-- dynamically rendered -->
+      </div>
+    </div>
+  </div>
+
+  <!-- Toast -->
+  <div id="toast" class="toast">已複製！</div>
+
+  <!-- Modal: Add/Edit Folder -->
+  <div id="modal-folder" class="modal-overlay hidden">
+    <div class="modal">
+      <div class="modal-header">
+        <span id="modal-folder-title">新增資料夾</span>
+        <button class="modal-close" data-modal="modal-folder">✕</button>
+      </div>
+      <div class="modal-body">
+        <label>資料夾名稱</label>
+        <input type="text" id="folder-name-input" placeholder="輸入名稱..." maxlength="50" />
+      </div>
+      <div class="modal-footer">
+        <button class="btn-cancel" data-modal="modal-folder">取消</button>
+        <button id="btn-folder-save" class="btn-primary">儲存</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal: Add/Edit Text -->
+  <div id="modal-text" class="modal-overlay hidden">
+    <div class="modal">
+      <div class="modal-header">
+        <span id="modal-text-title">新增文字</span>
+        <button class="modal-close" data-modal="modal-text">✕</button>
+      </div>
+      <div class="modal-body">
+        <label>標題（選填）</label>
+        <input type="text" id="text-name-input" placeholder="輸入標題..." maxlength="80" />
+        <label style="margin-top:12px">文字內容</label>
+        <textarea id="text-content-input" placeholder="輸入要儲存的文字..." rows="5"></textarea>
+        <label style="margin-top:12px">存放目錄</label>
+        <select id="text-folder-select">
+          <!-- dynamically rendered -->
+        </select>
+      </div>
+      <div class="modal-footer">
+        <button class="btn-cancel" data-modal="modal-text">取消</button>
+        <button id="btn-text-save" class="btn-primary">儲存</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal: Import/Export -->
+  <div id="modal-ie" class="modal-overlay hidden">
+    <div class="modal">
+      <div class="modal-header">
+        <span>匯入 / 匯出</span>
+        <button class="modal-close" data-modal="modal-ie">✕</button>
+      </div>
+      <div class="modal-body">
+        <div class="ie-section">
+          <p>匯出目前所有資料（JSON 格式）</p>
+          <button id="btn-export" class="btn-primary">匯出</button>
+        </div>
+        <hr />
+        <div class="ie-section">
+          <p>匯入資料（將覆蓋現有資料）</p>
+          <textarea id="import-textarea" placeholder="貼上 JSON 資料..." rows="5"></textarea>
+          <button id="btn-import" class="btn-primary" style="margin-top:8px">匯入</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal: Confirm Delete -->
+  <div id="modal-confirm" class="modal-overlay hidden">
+    <div class="modal modal-sm">
+      <div class="modal-header">
+        <span>確認刪除</span>
+      </div>
+      <div class="modal-body">
+        <p id="confirm-msg" style="font-size:13px;color:#444;line-height:1.6"></p>
+      </div>
+      <div class="modal-footer">
+        <button class="btn-cancel" data-modal="modal-confirm">取消</button>
+        <button id="btn-confirm-delete" class="btn-danger">刪除</button>
+      </div>
+    </div>
+  </div>
+
+  <script src="popup.js"></script>
+</body>
+</html>

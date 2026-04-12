@@ -1,0 +1,16 @@
+{
+  "manifest_version": 3,
+  "name": "文字庫",
+  "version": "1.0",
+  "description": "樹狀結構文字庫，一鍵複製常用文字",
+  "permissions": ["storage", "clipboardWrite"],
+  "action": {
+    "default_popup": "popup.html",
+    "default_title": "文字庫"
+  },
+  "icons": {
+    "16": "icons/icon16.png",
+    "48": "icons/icon48.png",
+    "128": "icons/icon128.png"
+  }
+}
