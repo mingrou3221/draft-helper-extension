@@ -7,6 +7,7 @@ let showHidden = false;
 let recentCopied = [];    // array of text node IDs (max 10)
 let currentTags = [];     // tags being edited in modal
 let pendingDeleteId = null;
+let pendingImportData = null;
 
 // ── Utility ────────────────────────────────────────────
 function genId() {
@@ -97,7 +98,8 @@ function renderTree() {
   document.querySelectorAll('.tree-folder, .tree-item-root, .tree-tag-item').forEach(el => {
     el.classList.remove('active');
   });
-  const activeEl = document.querySelector(`[data-id="${CSS.escape(selectedFolderId)}"]`);
+  const activeId = selectedFolderId === '__root__' ? '__root__' : selectedFolderId;
+  const activeEl = document.querySelector(`[data-id="${CSS.escape(activeId)}"]`);
   if (activeEl) activeEl.classList.add('active');
 }
 
@@ -202,9 +204,7 @@ function renderTextList() {
     const found = findNode(tree, selectedFolderId);
     if (found) {
       title.textContent = found.node.name;
-      texts = found.node.children
-        ? found.node.children.filter(n => n.type === 'text')
-        : [];
+      texts = collectTexts(found.node.children || [], showHidden);
     }
   }
 
@@ -386,16 +386,28 @@ function findParentFolder(nodes, childId, parentId = '__root__') {
 
 function populateFolderSelect(selectedId) {
   const sel = document.getElementById('text-folder-select');
-  sel.innerHTML = '<option value="__root__">（根目錄）</option>';
+  sel.innerHTML = '';
   const folders = flattenFolders(tree);
+  if (folders.length === 0) {
+    const opt = document.createElement('option');
+    opt.value = '';
+    opt.disabled = true;
+    opt.textContent = '（請先新增資料夾）';
+    sel.appendChild(opt);
+    sel.value = '';
+    return;
+  }
   for (const f of folders) {
     const opt = document.createElement('option');
     opt.value = f.id;
     opt.textContent = '\u00a0'.repeat(f.depth * 2) + f.name;
-    if (f.id === selectedId) opt.selected = true;
     sel.appendChild(opt);
   }
-  if (!selectedId || selectedId === '__root__') sel.value = '__root__';
+  if (selectedId && selectedId !== '__root__' && folders.find(f => f.id === selectedId)) {
+    sel.value = selectedId;
+  } else {
+    sel.value = folders[0].id;
+  }
 }
 
 function saveTextModal() {
@@ -409,6 +421,7 @@ function saveTextModal() {
   tagInput.value = '';
 
   if (!content) { document.getElementById('text-content-input').focus(); return; }
+  if (!folderId) { showToast('請先新增資料夾'); return; }
 
   if (editingNodeId) {
     const oldParent = findParentFolder(tree, editingNodeId);
@@ -583,18 +596,58 @@ function escHtml(str) {
 // ── Release Log ────────────────────────────────────────
 const RELEASE_LOG = [
   {
+    version: '2.0',
+    date: '2026-04-15',
+    badge: '功能更新',
+    groups: [
+      {
+        label: '新功能',
+        items: [
+          '左側新增「所有文字」可點選項目，快速切換全域瀏覽',
+          '搜尋範圍智能切換：所有文字模式跨資料夾搜尋，選擇資料夾時限定範圍內搜尋',
+          '匯入資料前新增確認提示，顯示現有資料筆數，防止誤覆蓋',
+        ]
+      },
+      {
+        label: '修正',
+        items: [
+          '新增文字時移除根目錄選項，文字必須存放於資料夾中避免遺失',
+        ]
+      },
+    ]
+  },
+  {
     version: '1.0',
     date: '2026-04-12',
     badge: '初始版本',
-    items: [
-      '樹狀資料夾結構，支援多層巢狀',
-      '一鍵複製常用文字到剪貼簿',
-      '新增/編輯/刪除資料夾與文字',
-      '資料夾排序（↑↓）與隱藏功能',
-      '標籤系統，跨資料夾檢索',
-      '最近複製紀錄',
-      '搜尋功能（支援標籤搜尋）',
-      '匯入/匯出（JSON 格式）',
+    groups: [
+      {
+        label: '主要功能',
+        items: [
+          '一鍵複製常用文字到剪貼簿',
+          '新增/編輯/刪除資料夾與文字',
+          '搜尋功能',
+        ]
+      },
+      {
+        label: '分類功能',
+        items: [
+          '資料夾、標籤系統',
+          '資料夾排序（↑↓）與隱藏功能',
+        ]
+      },
+      {
+        label: '記憶功能',
+        items: [
+          '最近複製紀錄（最近10筆）',
+        ]
+      },
+      {
+        label: '備份功能',
+        items: [
+          '匯入/匯出（JSON 格式）',
+        ]
+      },
     ]
   }
 ];
@@ -605,15 +658,21 @@ function openReleaseLog() {
   RELEASE_LOG.forEach((entry, idx) => {
     const div = document.createElement('div');
     div.className = 'release-entry';
+
+    const groupsHtml = (entry.groups || []).map(g => `
+      <div class="release-group-label">${escHtml(g.label)}</div>
+      <ul class="release-items">
+        ${g.items.map(item => `<li>${escHtml(item)}</li>`).join('')}
+      </ul>
+    `).join('');
+
     div.innerHTML = `
       <div class="release-header">
         <span class="release-version">v${escHtml(entry.version)}</span>
         <span class="release-date">${escHtml(entry.date)}</span>
         ${entry.badge ? `<span class="release-badge">${escHtml(entry.badge)}</span>` : ''}
       </div>
-      <ul class="release-items">
-        ${entry.items.map(item => `<li>${escHtml(item)}</li>`).join('')}
-      </ul>
+      ${groupsHtml}
     `;
     content.appendChild(div);
     if (idx < RELEASE_LOG.length - 1) {
@@ -635,19 +694,31 @@ function doExport() {
 function doImport() {
   const raw = document.getElementById('import-textarea').value.trim();
   if (!raw) return;
+  let data;
   try {
-    const data = JSON.parse(raw);
+    data = JSON.parse(raw);
     if (!Array.isArray(data)) throw new Error('格式錯誤');
-    tree = data;
-    selectedFolderId = '__root__';
-    saveTree();
-    renderTree();
-    renderTextList();
-    closeModal('modal-ie');
-    showToast('匯入成功！');
   } catch {
     alert('JSON 格式錯誤，請確認資料是否正確。');
+    return;
   }
+  pendingImportData = data;
+  document.getElementById('confirm-import-msg').textContent =
+    `匯入後將覆蓋現有所有資料（共 ${collectTexts(tree, true).length} 筆文字），此操作無法復原，確定要繼續嗎？`;
+  document.getElementById('modal-confirm-import').classList.remove('hidden');
+}
+
+function confirmImport() {
+  if (!pendingImportData) return;
+  tree = pendingImportData;
+  pendingImportData = null;
+  selectedFolderId = '__root__';
+  saveTree();
+  renderTree();
+  renderTextList();
+  closeModal('modal-confirm-import');
+  closeModal('modal-ie');
+  showToast('匯入成功！');
 }
 
 // ── Init ───────────────────────────────────────────────
@@ -680,6 +751,13 @@ document.addEventListener('DOMContentLoaded', () => {
   });
   document.getElementById('tb-delete').addEventListener('click', () => {
     if (!selectedFolderId.startsWith('__')) deleteNode(selectedFolderId);
+  });
+
+  document.getElementById('tree-item-all').addEventListener('click', () => {
+    selectedFolderId = '__root__';
+    document.querySelectorAll('.tree-folder, .tree-tag-item').forEach(el => el.classList.remove('active'));
+    document.getElementById('tree-item-all').classList.add('active');
+    renderTextList();
   });
 
   document.getElementById('btn-recent').addEventListener('click', () => {
@@ -726,6 +804,7 @@ document.addEventListener('DOMContentLoaded', () => {
   });
 
   document.getElementById('btn-confirm-delete').addEventListener('click', confirmDelete);
+  document.getElementById('btn-confirm-import').addEventListener('click', confirmImport);
 
   document.getElementById('btn-release-log').addEventListener('click', openReleaseLog);
 

@@ -16,7 +16,7 @@
     <div class="header-actions">
       <button id="btn-recent" class="btn-icon btn-ie-label" title="最近複製">最近複製</button>
       <button id="btn-import-export" class="btn-icon btn-ie-label" title="匯出/匯入">匯出/匯入</button>
-      <button id="btn-release-log" class="btn-icon btn-version" title="版本記錄">v1.0</button>
+      <button id="btn-release-log" class="btn-icon btn-version" title="版本記錄">v2.0</button>
     </div>
   </header>
 
@@ -38,6 +38,10 @@
         </div>
       </div>
       <div class="tree-root" id="tree-root">
+        <div class="tree-item-root" id="tree-item-all" data-id="__root__">
+          <span>📄</span>
+          <span>所有文字</span>
+        </div>
         <div class="tree-section-label">資料夾</div>
         <div id="tree-container">
           <!-- dynamically rendered -->
@@ -142,6 +146,22 @@
           <textarea id="import-textarea" placeholder="貼上 JSON 資料..." rows="5"></textarea>
           <button id="btn-import" class="btn-primary" style="margin-top:8px">匯入</button>
         </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal: Confirm Import -->
+  <div id="modal-confirm-import" class="modal-overlay hidden">
+    <div class="modal modal-sm">
+      <div class="modal-header">
+        <span>確認匯入</span>
+      </div>
+      <div class="modal-body">
+        <p id="confirm-import-msg" style="font-size:13px;color:#444;line-height:1.6"></p>
+      </div>
+      <div class="modal-footer">
+        <button class="btn-cancel" data-modal="modal-confirm-import">取消</button>
+        <button id="btn-confirm-import" class="btn-danger">確定覆蓋</button>
       </div>
     </div>
   </div>
