@@ -728,7 +728,7 @@ function doImport() {
   const currentCount = collectTexts(tree, true).length;
   const importCount = collectTexts(data, true).length;
   document.getElementById('confirm-import-msg').innerHTML =
-    `匯入後將覆蓋<strong style="color:#177077">現有所有資料</strong>（共 ${currentCount} 筆文字），匯入資料共 <strong style="color:#177077">${importCount} 筆文字</strong>，此操作無法復原，確定要繼續嗎？`;
+    `匯入後將覆蓋<strong style="color:#e63946">現有所有資料</strong>（共 ${currentCount} 筆文字），匯入資料共 <strong style="color:#177077">${importCount} 筆文字</strong>，此操作無法復原，確定要繼續嗎？`;
   document.getElementById('modal-confirm-import').classList.remove('hidden');
 }
 
