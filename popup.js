@@ -630,9 +630,7 @@ const RELEASE_LOG = [
       {
         label: '體驗優化',
         items: [
-          '插件記憶上次所在頁面，重開後自動還原',
-          '資料夾圖示改為副視覺色三角形，有子資料夾時展開自動旋轉',
-          '最近複製頁面顯示「僅顯示最近 10 筆」提示',
+          '記憶上次瀏覽頁面',
           '匯入確認視窗同時顯示現有與匯入資料筆數',
         ]
       },
@@ -728,7 +726,7 @@ function doImport() {
   const currentCount = collectTexts(tree, true).length;
   const importCount = collectTexts(data, true).length;
   document.getElementById('confirm-import-msg').innerHTML =
-    `匯入後將覆蓋<strong style="color:#e63946">現有所有資料</strong>（共 ${currentCount} 筆文字），匯入資料共 <strong style="color:#177077">${importCount} 筆文字</strong>，此操作無法復原，確定要繼續嗎？`;
+    `匯入後將<strong style="color:#e63946">覆蓋現有所有資料</strong>（共 ${currentCount} 筆文字），匯入資料共 <strong style="color:#177077">${importCount} 筆文字</strong>，此操作無法復原，確定要繼續嗎？`;
   document.getElementById('modal-confirm-import').classList.remove('hidden');
 }
 
@@ -841,8 +839,13 @@ document.addEventListener('DOMContentLoaded', () => {
   document.getElementById('btn-export').addEventListener('click', doExport);
   document.getElementById('btn-import').addEventListener('click', doImport);
 
+  let searchDebounce;
   document.getElementById('search-input').addEventListener('input', (e) => {
-    searchQuery = e.target.value.trim();
-    renderTextList();
+    clearTimeout(searchDebounce);
+    searchDebounce = setTimeout(() => {
+      searchQuery = e.target.value.trim();
+      renderTextList();
+    }, 300);
   });
+
 });
