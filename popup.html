@@ -40,7 +40,7 @@
       <div class="tree-root" id="tree-root">
         <div class="tree-item-root" id="tree-item-all" data-id="__root__">
           <span>📄</span>
-          <span>所有文字</span>
+          <span><strong>所有文字</strong></span>
         </div>
         <div class="tree-section-label">資料夾</div>
         <div id="tree-container">
@@ -54,7 +54,10 @@
     <!-- Right: Content Panel -->
     <div class="content-panel">
       <div class="panel-header">
-        <span id="content-title">所有文字</span>
+        <div style="display:flex;flex-direction:column;gap:1px;min-width:0">
+          <span id="content-title">所有文字</span>
+          <span id="content-subtitle" class="content-subtitle hidden"></span>
+        </div>
         <button id="btn-add-text" class="btn-small" title="新增文字">＋</button>
       </div>
       <div class="search-bar">

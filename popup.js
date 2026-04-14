@@ -75,10 +75,15 @@ function saveRecent() {
   chrome.storage.local.set({ recentCopied });
 }
 
+function saveSelectedFolder() {
+  chrome.storage.local.set({ selectedFolderId });
+}
+
 function loadTree(cb) {
-  chrome.storage.local.get(['tree', 'recentCopied'], (result) => {
+  chrome.storage.local.get(['tree', 'recentCopied', 'selectedFolderId'], (result) => {
     tree = result.tree && result.tree.length > 0 ? result.tree : defaultData();
     recentCopied = result.recentCopied || [];
+    if (result.selectedFolderId) selectedFolderId = result.selectedFolderId;
     cb();
   });
 }
@@ -133,8 +138,9 @@ function renderFolderNodes(nodes, container, depth) {
     folderEl.dataset.id = node.id;
     folderEl.style.paddingLeft = (8 + depth * 14) + 'px';
 
+    const hasSubFolders = node.children && node.children.some(n => n.type === 'folder');
     folderEl.innerHTML = `
-      <span class="folder-icon">📁</span>
+      <span class="folder-triangle${hasSubFolders && node.expanded ? ' rotated' : ''}">▶</span>
       <span class="folder-name" title="${escHtml(node.name)}">${escHtml(node.name)}</span>
     `;
 
@@ -143,6 +149,7 @@ function renderFolderNodes(nodes, container, depth) {
       node.expanded = !node.expanded;
       selectedFolderId = node.id;
       saveTree();
+      saveSelectedFolder();
       renderTree();
       renderTextList();
     });
@@ -173,6 +180,7 @@ function renderTagList() {
       selectedFolderId = `__tag__${tag}`;
       document.querySelectorAll('.tree-folder, .tree-item-root, .tree-tag-item').forEach(e => e.classList.remove('active'));
       el.classList.add('active');
+      saveSelectedFolder();
       renderTextList();
     });
     container.appendChild(el);
@@ -183,7 +191,10 @@ function renderTagList() {
 function renderTextList() {
   const list = document.getElementById('text-list');
   const title = document.getElementById('content-title');
+  const subtitle = document.getElementById('content-subtitle');
   list.innerHTML = '';
+  subtitle.textContent = '';
+  subtitle.classList.add('hidden');
 
   let texts = [];
 
@@ -192,6 +203,8 @@ function renderTextList() {
     texts = collectTexts(tree, showHidden);
   } else if (selectedFolderId === '__recent__') {
     title.textContent = '最近複製';
+    subtitle.textContent = '僅顯示最近 10 筆';
+    subtitle.classList.remove('hidden');
     texts = recentCopied.map(id => {
       const found = findNode(tree, id);
       return found ? found.node : null;
@@ -604,7 +617,7 @@ const RELEASE_LOG = [
         label: '新功能',
         items: [
           '左側新增「所有文字」可點選項目，快速切換全域瀏覽',
-          '搜尋範圍智能切換：所有文字模式跨資料夾搜尋，選擇資料夾時限定範圍內搜尋',
+          '搜尋範圍切換：所有文字模式跨資料夾搜尋，選擇資料夾時限定範圍內搜尋',
           '匯入資料前新增確認提示，顯示現有資料筆數，防止誤覆蓋',
         ]
       },
@@ -612,6 +625,15 @@ const RELEASE_LOG = [
         label: '修正',
         items: [
           '新增文字時移除根目錄選項，文字必須存放於資料夾中避免遺失',
+        ]
+      },
+      {
+        label: '體驗優化',
+        items: [
+          '插件記憶上次所在頁面，重開後自動還原',
+          '資料夾圖示改為副視覺色三角形，有子資料夾時展開自動旋轉',
+          '最近複製頁面顯示「僅顯示最近 10 筆」提示',
+          '匯入確認視窗同時顯示現有與匯入資料筆數',
         ]
       },
     ]
@@ -703,8 +725,10 @@ function doImport() {
     return;
   }
   pendingImportData = data;
-  document.getElementById('confirm-import-msg').textContent =
-    `匯入後將覆蓋現有所有資料（共 ${collectTexts(tree, true).length} 筆文字），此操作無法復原，確定要繼續嗎？`;
+  const currentCount = collectTexts(tree, true).length;
+  const importCount = collectTexts(data, true).length;
+  document.getElementById('confirm-import-msg').innerHTML =
+    `匯入後將覆蓋<strong style="color:#177077">現有所有資料</strong>（共 ${currentCount} 筆文字），匯入資料共 <strong style="color:#177077">${importCount} 筆文字</strong>，此操作無法復原，確定要繼續嗎？`;
   document.getElementById('modal-confirm-import').classList.remove('hidden');
 }
 
@@ -757,12 +781,14 @@ document.addEventListener('DOMContentLoaded', () => {
     selectedFolderId = '__root__';
     document.querySelectorAll('.tree-folder, .tree-tag-item').forEach(el => el.classList.remove('active'));
     document.getElementById('tree-item-all').classList.add('active');
+    saveSelectedFolder();
     renderTextList();
   });
 
   document.getElementById('btn-recent').addEventListener('click', () => {
     selectedFolderId = '__recent__';
     document.querySelectorAll('.tree-folder, .tree-tag-item').forEach(el => el.classList.remove('active'));
+    saveSelectedFolder();
     renderTextList();
   });
 

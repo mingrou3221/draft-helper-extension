@@ -210,6 +210,16 @@ body {
   border-bottom: none;
 }
 
+.content-subtitle {
+  font-size: 10px;
+  font-weight: 400;
+  color: #aaa;
+}
+
+.content-subtitle.hidden {
+  display: none;
+}
+
 .folder-toolbar {
   display: flex;
   gap: 2px;
@@ -339,6 +349,21 @@ body {
 .tree-folder .folder-icon {
   font-size: 14px;
   flex-shrink: 0;
+}
+
+.folder-triangle {
+  font-size: 9px;
+  color: #177077;
+  flex-shrink: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 14px;
+  transition: transform 0.15s;
+}
+
+.folder-triangle.rotated {
+  transform: rotate(90deg);
 }
 
 .tree-folder .folder-name {
