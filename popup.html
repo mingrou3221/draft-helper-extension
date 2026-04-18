@@ -15,7 +15,9 @@
     </div>
     <div class="header-actions">
       <button id="btn-recent" class="btn-icon btn-ie-label" title="最近複製">最近複製</button>
+      <button id="btn-delete-history" class="btn-icon btn-ie-label" title="刪除紀錄">刪除紀錄</button>
       <button id="btn-import-export" class="btn-icon btn-ie-label" title="匯出/匯入">匯出/匯入</button>
+      <button id="btn-tour" class="btn-icon btn-ie-label" title="功能導覽">功能導覽</button>
       <button id="btn-release-log" class="btn-icon btn-version" title="版本記錄">v2.0</button>
     </div>
   </header>
@@ -26,14 +28,14 @@
     <div class="tree-panel">
       <div class="panel-header no-border">
         <div class="folder-toolbar">
-          <button class="tb-btn" id="tb-up" title="上移" disabled>↑</button>
-          <button class="tb-btn" id="tb-down" title="下移" disabled>↓</button>
-          <button class="tb-btn" id="tb-hide" title="隱藏" disabled>👀</button>
+          <button class="tb-btn" id="tb-up" title="上移" disabled></button>
+          <button class="tb-btn" id="tb-down" title="下移" disabled></button>
+          <button class="tb-btn" id="tb-hide" title="隱藏" disabled></button>
           <button class="tb-btn" id="tb-edit" title="編輯" disabled>✏️</button>
           <button class="tb-btn tb-del" id="tb-delete" title="刪除" disabled>🗑</button>
         </div>
         <div style="display:flex;gap:4px">
-          <button id="btn-toggle-hidden" class="btn-small btn-ghost" title="顯示隱藏資料夾">👀</button>
+          <button id="btn-toggle-hidden" class="btn-small btn-ghost" title="顯示隱藏資料夾"></button>
           <button id="btn-add-folder" class="btn-small" title="新增資料夾">＋</button>
         </div>
       </div>
@@ -46,6 +48,8 @@
         <div id="tree-container">
           <!-- dynamically rendered -->
         </div>
+      </div>
+      <div class="tree-tags-panel">
         <div class="tree-section">標籤</div>
         <div id="tag-list-container"></div>
       </div>
@@ -145,7 +149,7 @@
         </div>
         <hr />
         <div class="ie-section">
-          <p>匯入資料（將覆蓋現有資料）</p>
+          <p>匯入資料（可選擇新增內容或覆蓋目前所有資料）</p>
           <textarea id="import-textarea" placeholder="貼上 JSON 資料..." rows="5"></textarea>
           <button id="btn-import" class="btn-primary" style="margin-top:8px">匯入</button>
         </div>
@@ -161,10 +165,20 @@
       </div>
       <div class="modal-body">
         <p id="confirm-import-msg" style="font-size:13px;color:#444;line-height:1.6"></p>
+        <div style="margin-top:12px;display:flex;flex-direction:column;gap:8px;font-size:13px">
+          <label style="display:flex;align-items:center;gap:6px;cursor:pointer">
+            <input type="radio" name="import-mode" id="import-mode-overwrite" value="overwrite" checked>
+            <span><strong style="color:#e63946">覆蓋</strong>現有所有資料（無法復原）</span>
+          </label>
+          <label style="display:flex;align-items:center;gap:6px;cursor:pointer">
+            <input type="radio" name="import-mode" id="import-mode-merge" value="merge">
+            <span>加入現有資料（保留現有內容）</span>
+          </label>
+        </div>
       </div>
       <div class="modal-footer">
         <button class="btn-cancel" data-modal="modal-confirm-import">取消</button>
-        <button id="btn-confirm-import" class="btn-danger">確定覆蓋</button>
+        <button id="btn-confirm-import" class="btn-primary">確認匯入</button>
       </div>
     </div>
   </div>
@@ -181,6 +195,36 @@
       <div class="modal-footer">
         <button class="btn-cancel" data-modal="modal-confirm">取消</button>
         <button id="btn-confirm-delete" class="btn-danger">刪除</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal: Feature Tour -->
+  <div id="modal-tour" class="modal-overlay hidden">
+    <div class="modal modal-release">
+      <div class="modal-header">
+        <span>功能導覽</span>
+        <button class="modal-close" data-modal="modal-tour">✕</button>
+      </div>
+      <div class="modal-body release-log-body" id="tour-list">
+        <!-- dynamically rendered -->
+      </div>
+    </div>
+  </div>
+
+  <!-- Tour Spotlight -->
+  <div id="tour-spotlight" class="hidden"></div>
+  <div id="tour-tooltip" class="hidden"></div>
+
+  <!-- Modal: Delete History -->
+  <div id="modal-delete-history" class="modal-overlay hidden">
+    <div class="modal modal-release">
+      <div class="modal-header">
+        <span>刪除紀錄</span>
+        <button class="modal-close" data-modal="modal-delete-history">✕</button>
+      </div>
+      <div class="modal-body release-log-body" id="delete-history-list">
+        <!-- dynamically rendered -->
       </div>
     </div>
   </div>

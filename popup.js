@@ -8,10 +8,23 @@ let recentCopied = [];    // array of text node IDs (max 10)
 let currentTags = [];     // tags being edited in modal
 let pendingDeleteId = null;
 let pendingImportData = null;
+let deleteHistory = [];    // array of {node, parentFolderId, deletedAt} (max 10)
+
+// ── Icons ───────────────────────────────────────────────
+const SVG_EYE = `<svg width="14" height="10" viewBox="0 0 14 10" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M1 5C2.5 2 4.5 1 7 1s4.5 1 6 4c-1.5 3-3.5 4-6 4S2.5 8 1 5z"/><circle cx="7" cy="5" r="1.8" fill="currentColor" stroke="none"/></svg>`;
+const SVG_EYE_SLASH = `<svg width="14" height="12" viewBox="0 0 14 12" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M1 6C2.5 3 4.5 2 7 2s4.5 1 6 4c-1.5 3-3.5 4-6 4S2.5 9 1 6z"/><circle cx="7" cy="6" r="1.8" fill="currentColor" stroke="none"/><line x1="2" y1="1" x2="12" y2="11"/></svg>`;
+const SVG_UP = `<svg width="12" height="12" viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="2,8 6,4 10,8"/></svg>`;
+const SVG_DOWN = `<svg width="12" height="12" viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="2,4 6,8 10,4"/></svg>`;
 
 // ── Utility ────────────────────────────────────────────
 function genId() {
-  return Date.now().toString(36) + Math.random().toString(36).slice(2, 7);
+  return crypto.randomUUID();
+}
+
+function getFolderDepth(id) {
+  const all = flattenFolders(tree);
+  const found = all.find(f => f.id === id);
+  return found ? found.depth : -1;
 }
 
 function findNode(nodes, id) {
@@ -79,10 +92,22 @@ function saveSelectedFolder() {
   chrome.storage.local.set({ selectedFolderId });
 }
 
+function saveDeleteHistory() {
+  chrome.storage.local.set({ deleteHistory });
+}
+
+function reIdNodes(nodes) {
+  for (const n of nodes) {
+    n.id = genId();
+    if (n.children) reIdNodes(n.children);
+  }
+}
+
 function loadTree(cb) {
-  chrome.storage.local.get(['tree', 'recentCopied', 'selectedFolderId'], (result) => {
+  chrome.storage.local.get(['tree', 'recentCopied', 'selectedFolderId', 'deleteHistory'], (result) => {
     tree = result.tree && result.tree.length > 0 ? result.tree : defaultData();
     recentCopied = result.recentCopied || [];
+    deleteHistory = result.deleteHistory || [];
     if (result.selectedFolderId) selectedFolderId = result.selectedFolderId;
     cb();
   });
@@ -119,7 +144,7 @@ function updateFolderToolbar() {
   if (isFolder) {
     const found = findNode(tree, selectedFolderId);
     const hideBtn = document.getElementById('tb-hide');
-    if (found && hideBtn) hideBtn.textContent = found.node.hidden ? '🙈' : '👀';
+    if (found && hideBtn) hideBtn.innerHTML = found.node.hidden ? SVG_EYE_SLASH : SVG_EYE;
   }
 }
 
@@ -338,6 +363,10 @@ function saveFolderModal() {
   } else {
     const newFolder = { id: genId(), name, type: 'folder', expanded: false, children: [] };
     const parentId = document.getElementById('btn-folder-save').dataset.parentId;
+    if (parentId && parentId !== '__root__' && getFolderDepth(parentId) >= 2) {
+      alert('最多支援 3 層資料夾，無法繼續新增子資料夾。');
+      return;
+    }
     if (!parentId || parentId === '__root__') {
       tree.push(newFolder);
     } else {
@@ -576,6 +605,16 @@ function confirmDelete() {
   if (!pendingDeleteId) return;
   const found = findNode(tree, pendingDeleteId);
   if (found) {
+    // Record delete history
+    const parentFolderId = findParentFolder(tree, pendingDeleteId) || '__root__';
+    deleteHistory.unshift({
+      node: JSON.parse(JSON.stringify(found.node)),
+      parentFolderId,
+      deletedAt: Date.now()
+    });
+    if (deleteHistory.length > 10) deleteHistory.pop();
+    saveDeleteHistory();
+
     // Clean up recentCopied
     if (found.node.type === 'folder') {
       const textIds = collectTexts([found.node], true).map(t => t.id);
@@ -595,6 +634,85 @@ function confirmDelete() {
   closeModal('modal-confirm');
 }
 
+// ── Delete History ─────────────────────────────────────
+function renderDeleteHistory() {
+  const container = document.getElementById('delete-history-list');
+  if (!deleteHistory.length) {
+    container.innerHTML = '<p style="color:#999;font-size:13px;text-align:center;padding:16px">尚無刪除紀錄</p>';
+    return;
+  }
+  container.innerHTML = deleteHistory.map((entry, i) => {
+    const node = entry.node;
+    const isFolder = node.type === 'folder';
+    const typeTag = isFolder ? '資料夾' : '文字';
+    const date = new Date(entry.deletedAt).toLocaleString('zh-TW', { month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit' });
+    const titleLine = isFolder
+      ? escHtml(node.name)
+      : (node.name ? escHtml(node.name) : '<span style="color:#aaa">（無標題）</span>');
+    const previewLine = isFolder
+      ? (() => { const count = collectTexts([node], true).length; return `共 ${count} 筆文字`; })()
+      : `<span class="delete-history-preview">${escHtml(node.content)}</span>`;
+    return `<div class="delete-history-item">
+      <div class="delete-history-info">
+        <div style="display:flex;align-items:center;gap:6px">
+          <span class="delete-history-type">${typeTag}</span>
+          <span class="delete-history-time">${date}</span>
+        </div>
+        <span class="delete-history-label">${titleLine}</span>
+        <div class="delete-history-content">${previewLine}</div>
+      </div>
+      <div style="display:flex;flex-direction:column;gap:4px;flex-shrink:0">
+        <button class="btn-small delete-history-restore" data-index="${i}">還原</button>
+        <button class="delete-history-remove" data-index="${i}">移除</button>
+      </div>
+    </div>`;
+  }).join('');
+
+  container.querySelectorAll('.delete-history-restore').forEach(btn => {
+    btn.addEventListener('click', () => restoreDeleted(parseInt(btn.dataset.index)));
+  });
+  container.querySelectorAll('.delete-history-remove').forEach(btn => {
+    btn.addEventListener('click', () => {
+      deleteHistory.splice(parseInt(btn.dataset.index), 1);
+      saveDeleteHistory();
+      renderDeleteHistory();
+    });
+  });
+}
+
+function restoreDeleted(index) {
+  const entry = deleteHistory[index];
+  if (!entry) return;
+  const node = JSON.parse(JSON.stringify(entry.node));
+  reIdNodes([node]);
+
+  if (node.type === 'folder') {
+    tree.push(node);
+  } else {
+    const parentFound = findNode(tree, entry.parentFolderId);
+    if (parentFound && parentFound.node.type === 'folder') {
+      parentFound.node.children.push(node);
+    } else {
+      const allFolders = flattenFolders(tree);
+      if (allFolders.length > 0) {
+        const firstFolder = findNode(tree, allFolders[0].id);
+        if (firstFolder) firstFolder.node.children.push(node);
+      } else {
+        alert('找不到可放置的資料夾，請先建立資料夾再還原。');
+        return;
+      }
+    }
+  }
+
+  deleteHistory.splice(index, 1);
+  saveDeleteHistory();
+  saveTree();
+  renderTree();
+  renderTextList();
+  renderDeleteHistory();
+  showToast('已還原！');
+}
+
 // ── Modal helpers ──────────────────────────────────────
 function closeModal(id) {
   document.getElementById(id).classList.add('hidden');
@@ -604,6 +722,84 @@ function closeModal(id) {
 function escHtml(str) {
   if (!str) return '';
   return str.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+}
+
+// ── Feature Tour ───────────────────────────────────────
+const TOUR_ITEMS = [
+  { title: '所有文字', desc: '顯示全部資料夾內的所有文字，搜尋時跨資料夾全域查找。', target: '#tree-item-all' },
+  { title: '資料夾', desc: '點選資料夾切換顯示範圍，搜尋時僅搜尋該資料夾及其子資料夾內容。', target: '#tree-container' },
+  { title: '標籤篩選', desc: '左側標籤列表可跨資料夾篩選所有包含該標籤的文字。', target: '#tag-list-container' },
+  { title: '搜尋', desc: '在所有文字搜尋文字名稱、內容與標籤，搜尋範圍為全域，於特定資料夾搜尋，則會將搜尋範圍侷限於目前選擇資料夾當中。', target: '#search-input' },
+  { title: '新增文字', desc: '在目前資料夾新增文字項目，可設定標題、內容與標籤。', target: '#btn-add-text' },
+  { title: '資料夾工具列', desc: '選取資料夾後可上移、下移、隱藏、編輯或刪除該資料夾。', target: '.folder-toolbar' },
+  { title: '最近複製', desc: '記錄最近 10 筆複製內容，方便快速取用常用文字。', target: '#btn-recent' },
+  { title: '刪除紀錄', desc: '保留最近 10 筆刪除紀錄，可一鍵還原誤刪的資料夾或文字。', target: '#btn-delete-history' },
+  { title: '匯入 / 匯出', desc: '匯入匯出資料均為JSON 格式，匯入資料時可選擇覆蓋或加入現有資料。', target: '#btn-import-export' },
+];
+
+function renderTour() {
+  document.getElementById('tour-list').innerHTML = TOUR_ITEMS.map((item, i) =>
+    `<div class="tour-item">
+      <div class="tour-item-info">
+        <span class="tour-item-title">${escHtml(item.title)}</span>
+        <span class="tour-item-desc">${escHtml(item.desc)}</span>
+      </div>
+      <button class="tour-demo-btn" data-index="${i}">示範</button>
+    </div>`
+  ).join('');
+
+  document.querySelectorAll('.tour-demo-btn').forEach(btn => {
+    btn.addEventListener('click', () => startDemo(parseInt(btn.dataset.index)));
+  });
+}
+
+function startDemo(index) {
+  const item = TOUR_ITEMS[index];
+  if (!item) return;
+  const target = document.querySelector(item.target);
+  if (!target) return;
+
+  closeModal('modal-tour');
+
+  const spotlight = document.getElementById('tour-spotlight');
+  const tooltip = document.getElementById('tour-tooltip');
+  const rect = target.getBoundingClientRect();
+  const pad = 5;
+
+  spotlight.style.left   = (rect.left   - pad) + 'px';
+  spotlight.style.top    = (rect.top    - pad) + 'px';
+  spotlight.style.width  = (rect.width  + pad * 2) + 'px';
+  spotlight.style.height = (rect.height + pad * 2) + 'px';
+
+  tooltip.textContent = item.desc;
+  spotlight.classList.remove('hidden');
+  tooltip.classList.remove('hidden');
+
+  // Position tooltip: prefer below, fallback above; clamp to viewport
+  const tooltipWidth = 220;
+  const clampedLeft = Math.min(Math.max(8, rect.left), window.innerWidth - tooltipWidth - 8);
+  tooltip.style.left = clampedLeft + 'px';
+  tooltip.style.top = '';
+  tooltip.style.bottom = '';
+  const spaceBelow = window.innerHeight - rect.bottom;
+  if (spaceBelow >= 70) {
+    tooltip.style.top = (rect.bottom + 10) + 'px';
+  } else {
+    tooltip.style.bottom = (window.innerHeight - rect.top + 10) + 'px';
+  }
+
+  let dismissed = false;
+  function dismiss() {
+    if (dismissed) return;
+    dismissed = true;
+    spotlight.classList.add('hidden');
+    tooltip.classList.add('hidden');
+    document.removeEventListener('click', dismiss);
+  }
+
+  const timer = setTimeout(dismiss, 3000);
+  setTimeout(() => document.addEventListener('click', dismiss, { once: true }), 200);
+  spotlight.addEventListener('click', () => { clearTimeout(timer); dismiss(); }, { once: true });
 }
 
 // ── Release Log ────────────────────────────────────────
@@ -722,17 +918,38 @@ function doImport() {
     alert('JSON 格式錯誤，請確認資料是否正確。');
     return;
   }
+  function checkDepth(nodes, d) {
+    for (const n of nodes) {
+      if (n.type === 'folder') {
+        if (d > 2) return false;
+        if (n.children && !checkDepth(n.children, d + 1)) return false;
+      }
+    }
+    return true;
+  }
+  if (!checkDepth(data, 0)) {
+    alert('匯入的資料超過 3 層資料夾限制，請調整後重新匯入。');
+    return;
+  }
   pendingImportData = data;
   const currentCount = collectTexts(tree, true).length;
   const importCount = collectTexts(data, true).length;
   document.getElementById('confirm-import-msg').innerHTML =
-    `匯入後將<strong style="color:#e63946">覆蓋現有所有資料</strong>（共 ${currentCount} 筆文字），匯入資料共 <strong style="color:#177077">${importCount} 筆文字</strong>，此操作無法復原，確定要繼續嗎？`;
+    `目前已有 <strong style="color:#177077">${currentCount} 筆文字</strong>，匯入資料共 <strong style="color:#177077">${importCount} 筆文字</strong>。請選擇匯入方式：`;
+  document.getElementById('import-mode-overwrite').checked = true;
   document.getElementById('modal-confirm-import').classList.remove('hidden');
 }
 
 function confirmImport() {
   if (!pendingImportData) return;
-  tree = pendingImportData;
+  const mode = document.querySelector('input[name="import-mode"]:checked').value;
+  if (mode === 'overwrite') {
+    tree = pendingImportData;
+  } else {
+    const imported = JSON.parse(JSON.stringify(pendingImportData));
+    reIdNodes(imported);
+    tree.push(...imported);
+  }
   pendingImportData = null;
   selectedFolderId = '__root__';
   saveTree();
@@ -740,11 +957,17 @@ function confirmImport() {
   renderTextList();
   closeModal('modal-confirm-import');
   closeModal('modal-ie');
-  showToast('匯入成功！');
+  showToast(mode === 'overwrite' ? '匯入成功！' : '資料已加入！');
 }
 
 // ── Init ───────────────────────────────────────────────
 document.addEventListener('DOMContentLoaded', () => {
+  // Set static SVG icons
+  document.getElementById('tb-up').innerHTML = SVG_UP;
+  document.getElementById('tb-down').innerHTML = SVG_DOWN;
+  document.getElementById('tb-hide').innerHTML = SVG_EYE;
+  document.getElementById('btn-toggle-hidden').innerHTML = SVG_EYE_SLASH;
+
   loadTree(() => {
     renderTree();
     renderTextList();
@@ -792,7 +1015,9 @@ document.addEventListener('DOMContentLoaded', () => {
 
   document.getElementById('btn-toggle-hidden').addEventListener('click', () => {
     showHidden = !showHidden;
-    document.getElementById('btn-toggle-hidden').classList.toggle('active', showHidden);
+    const toggleBtn = document.getElementById('btn-toggle-hidden');
+    toggleBtn.classList.toggle('active', showHidden);
+    toggleBtn.innerHTML = showHidden ? SVG_EYE : SVG_EYE_SLASH;
     renderTree();
     renderTextList();
   });
@@ -829,6 +1054,16 @@ document.addEventListener('DOMContentLoaded', () => {
 
   document.getElementById('btn-confirm-delete').addEventListener('click', confirmDelete);
   document.getElementById('btn-confirm-import').addEventListener('click', confirmImport);
+
+  document.getElementById('btn-tour').addEventListener('click', () => {
+    renderTour();
+    document.getElementById('modal-tour').classList.remove('hidden');
+  });
+
+  document.getElementById('btn-delete-history').addEventListener('click', () => {
+    renderDeleteHistory();
+    document.getElementById('modal-delete-history').classList.remove('hidden');
+  });
 
   document.getElementById('btn-release-log').addEventListener('click', openReleaseLog);
 

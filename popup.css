@@ -4,6 +4,10 @@
   padding: 0;
 }
 
+.hidden {
+  display: none !important;
+}
+
 body {
   width: 560px;
   height: 520px;
@@ -767,14 +771,19 @@ body {
 }
 
 /* ── Tags in Tree ── */
+.tree-tags-panel {
+  flex-shrink: 0;
+  max-height: 160px;
+  overflow-y: auto;
+  border-top: 1px solid #e8eaf0;
+}
+
 .tree-section {
   padding: 8px 12px 4px;
   font-size: 13px;
   font-weight: 700;
   color: #888;
   letter-spacing: 0.3px;
-  border-top: 1px solid #f0f0f5;
-  margin-top: 6px;
 }
 
 .tree-tag-item {
@@ -894,6 +903,154 @@ body {
 
 .modal-sm {
   width: 280px;
+}
+
+/* ── Feature Tour ── */
+.tour-item {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 10px 0;
+  border-bottom: 1px solid #f0f0f0;
+}
+.tour-item:last-child {
+  border-bottom: none;
+}
+.tour-item-info {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  min-width: 0;
+}
+.tour-item-title {
+  font-size: 13px;
+  font-weight: 600;
+  color: #222;
+}
+.tour-item-desc {
+  font-size: 12px;
+  color: #777;
+  line-height: 1.5;
+}
+.tour-demo-btn {
+  flex-shrink: 0;
+  padding: 3px 10px;
+  border: 1.5px solid #177077;
+  border-radius: 5px;
+  background: transparent;
+  color: #177077;
+  font-size: 12px;
+  cursor: pointer;
+  transition: background 0.15s, color 0.15s;
+  white-space: nowrap;
+}
+.tour-demo-btn:hover {
+  background: #177077;
+  color: white;
+}
+
+#tour-spotlight {
+  position: fixed;
+  border-radius: 6px;
+  box-shadow: 0 0 0 9999px rgba(0, 0, 0, 0.55);
+  z-index: 9998;
+  pointer-events: auto;
+  animation: tour-pulse 0.4s ease;
+}
+@keyframes tour-pulse {
+  from { box-shadow: 0 0 0 9999px rgba(0,0,0,0); }
+  to   { box-shadow: 0 0 0 9999px rgba(0,0,0,0.55); }
+}
+
+#tour-tooltip {
+  position: fixed;
+  background: #fff;
+  border-radius: 8px;
+  padding: 9px 12px;
+  box-shadow: 0 4px 16px rgba(0,0,0,0.18);
+  z-index: 9999;
+  max-width: 220px;
+  font-size: 12px;
+  color: #333;
+  line-height: 1.6;
+  pointer-events: none;
+  animation: tour-fade 0.25s ease;
+}
+@keyframes tour-fade {
+  from { opacity: 0; transform: translateY(4px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+/* ── Delete History ── */
+.delete-history-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 8px 0;
+  border-bottom: 1px solid #f0f0f0;
+}
+.delete-history-item:last-child {
+  border-bottom: none;
+}
+.delete-history-info {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+.delete-history-type {
+  font-size: 10px;
+  color: #999;
+  font-weight: 500;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+.delete-history-label {
+  font-size: 13px;
+  color: #333;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 200px;
+}
+.delete-history-time {
+  font-size: 11px;
+  color: #aaa;
+}
+.delete-history-content {
+  font-size: 12px;
+  color: #888;
+  margin-top: 2px;
+  max-width: 210px;
+}
+.delete-history-preview {
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  white-space: pre-wrap;
+  word-break: break-all;
+}
+.delete-history-restore {
+  flex-shrink: 0;
+  width: auto !important;
+  padding: 0 8px !important;
+  font-size: 12px !important;
+}
+.delete-history-remove {
+  border: none;
+  background: none;
+  color: #bbb;
+  font-size: 11px;
+  cursor: pointer;
+  text-align: center;
+  padding: 2px 0;
+  transition: color 0.15s;
+}
+.delete-history-remove:hover {
+  color: #e63946;
 }
 
 /* ── Import/Export ── */
