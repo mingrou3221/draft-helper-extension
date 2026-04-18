@@ -948,17 +948,24 @@ function doImport() {
     alert('JSON 格式錯誤，請確認資料是否正確。');
     return;
   }
-  function checkDepth(nodes, d) {
+  function checkNodes(nodes, d) {
     for (const n of nodes) {
+      if (!n.id || typeof n.id !== 'string') return '節點缺少有效的 id';
+      if (n.type !== 'folder' && n.type !== 'text') return '節點 type 必須為 folder 或 text';
       if (n.type === 'folder') {
-        if (d > 2) return false;
-        if (n.children && !checkDepth(n.children, d + 1)) return false;
+        if (d > 2) return '資料夾超過 3 層限制';
+        if (n.children) {
+          const err = checkNodes(n.children, d + 1);
+          if (err) return err;
+        }
       }
+      if (n.type === 'text' && (typeof n.content !== 'string')) return '文字節點缺少 content 欄位';
     }
-    return true;
+    return null;
   }
-  if (!checkDepth(data, 0)) {
-    alert('匯入的資料超過 3 層資料夾限制，請調整後重新匯入。');
+  const validationError = checkNodes(data, 0);
+  if (validationError) {
+    alert(`匯入失敗：${validationError}，請確認資料格式後重新匯入。`);
     return;
   }
   pendingImportData = data;
@@ -966,7 +973,7 @@ function doImport() {
   const importCount = collectTexts(data, true).length;
   document.getElementById('confirm-import-msg').innerHTML =
     `目前已有 <strong style="color:#177077">${currentCount} 筆文字</strong>，匯入資料共 <strong style="color:#177077">${importCount} 筆文字</strong>。請選擇匯入方式：`;
-  document.getElementById('import-mode-overwrite').checked = true;
+  document.getElementById('import-mode-merge').checked = true;
   document.getElementById('modal-confirm-import').classList.remove('hidden');
 }
 
