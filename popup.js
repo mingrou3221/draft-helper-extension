@@ -727,8 +727,8 @@ function escHtml(str) {
 // ── Feature Tour ───────────────────────────────────────
 const TOUR_ITEMS = [
   { title: '所有文字', desc: '顯示全部資料夾內的所有文字，搜尋時跨資料夾全域查找。', target: '#tree-item-all' },
-  { title: '資料夾', desc: '點選資料夾切換顯示範圍，搜尋時僅搜尋該資料夾及其子資料夾內容。', target: '#tree-container' },
-  { title: '標籤篩選', desc: '左側標籤列表可跨資料夾篩選所有包含該標籤的文字。', target: '#tag-list-container' },
+  { title: '資料夾', desc: '點選資料夾切換顯示範圍，搜尋時僅搜尋該資料夾及其子資料夾內容。', target: '#tree-root' },
+  { title: '標籤篩選', desc: '左側標籤列表可跨資料夾篩選所有包含該標籤的文字。', target: '.tree-tags-panel' },
   { title: '搜尋', desc: '在所有文字搜尋文字名稱、內容與標籤，搜尋範圍為全域，於特定資料夾搜尋，則會將搜尋範圍侷限於目前選擇資料夾當中。', target: '#search-input' },
   { title: '新增文字', desc: '在目前資料夾新增文字項目，可設定標題、內容與標籤。', target: '#btn-add-text' },
   { title: '資料夾工具列', desc: '選取資料夾後可上移、下移、隱藏、編輯或刪除該資料夾。', target: '.folder-toolbar' },
