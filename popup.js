@@ -80,20 +80,27 @@ function flattenFolders(nodes, depth = 0, result = []) {
 }
 
 // ── Storage ────────────────────────────────────────────
+function handleStorageError(label) {
+  if (chrome.runtime.lastError) {
+    console.error(`${label} 儲存失敗:`, chrome.runtime.lastError);
+    showToast('儲存失敗：空間不足或權限錯誤');
+  }
+}
+
 function saveTree() {
-  chrome.storage.local.set({ tree });
+  chrome.storage.local.set({ tree }, () => handleStorageError('tree'));
 }
 
 function saveRecent() {
-  chrome.storage.local.set({ recentCopied });
+  chrome.storage.local.set({ recentCopied }, () => handleStorageError('recentCopied'));
 }
 
 function saveSelectedFolder() {
-  chrome.storage.local.set({ selectedFolderId });
+  chrome.storage.local.set({ selectedFolderId }, () => handleStorageError('selectedFolderId'));
 }
 
 function saveDeleteHistory() {
-  chrome.storage.local.set({ deleteHistory });
+  chrome.storage.local.set({ deleteHistory }, () => handleStorageError('deleteHistory'));
 }
 
 function reIdNodes(nodes) {
@@ -698,8 +705,8 @@ function restoreDeleted(index) {
         const firstFolder = findNode(tree, allFolders[0].id);
         if (firstFolder) firstFolder.node.children.push(node);
       } else {
-        alert('找不到可放置的資料夾，請先建立資料夾再還原。');
-        return;
+        tree.push(node);
+        showToast('原路徑已不存在，已還原至根目錄');
       }
     }
   }
@@ -804,6 +811,21 @@ function startDemo(index) {
 
 // ── Release Log ────────────────────────────────────────
 const RELEASE_LOG = [
+  {
+    version: '3.1',
+    date: '2026-04-26',
+    badge: '穩定性修復',
+    groups: [
+      {
+        label: '改進',
+        items: [
+          '儲存失敗時顯示提示，避免資料無聲遺失',
+          '還原刪除項目時不再因資料夾不存在而阻擋操作',
+          '新增 unlimitedStorage 權限，避免長期使用後空間不足',
+        ]
+      },
+    ]
+  },
   {
     version: '3.0',
     date: '2026-04-18',
